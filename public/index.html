@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DoubtLink - Connect & Solve Doubts</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Full dark theme + gradient highlights */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #fff;
+    }
+
+    header {
+      background: linear-gradient(90deg, #6a0dad, #4b0082);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+      color: #fff;
+    }
+
+    header nav a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 1.5rem;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    header nav a:hover {
+      color: #ff69b4;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 6rem 2rem;
+      background: linear-gradient(to bottom, rgba(106,0,173,0.8), rgba(75,0,130,0.8)), url('https://images.unsplash.com/photo-1522202220573-4aa5c3a02f42?auto=format&fit=crop&w=1950&q=80') center/cover no-repeat;
+    }
+
+    .hero h2 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    .hero a {
+      text-decoration: none;
+      color: #fff;
+      background: #6a0dad;
+      padding: 0.8rem 1.5rem;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .hero a:hover {
+      background: #4b0082;
+    }
+
+    section {
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: #1f1f1f;
+      padding: 2rem;
+      border-radius: 10px;
+      flex: 1 1 250px;
+      max-width: 300px;
+      transition: transform 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: scale(1.05);
+    }
+
+    .feature-card h3 {
+      margin-bottom: 1rem;
+      color: #ff69b4;
+    }
+
+    footer {
+      padding: 2rem;
+      text-align: center;
+      background-color: #1f1f1f;
+      color: #aaa;
+    }
+
+    @media(max-width: 768px){
+      .hero h2 {
+        font-size: 2.2rem;
+      }
+      .features {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DoubtLink</h1>
+    <nav>
+      <a href="signup.html">Sign Up</a>
+      <a href="login.html">Login</a>
+      <a href="leaderboard.html">Leaderboard</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h2>Connect. Ask. Solve.</h2>
+    <p>DoubtLink helps college juniors get their doubts solved by experienced seniors in real-time.</p>
+    <a href="signup.html">Get Started</a>
+  </section>
+
+  <section>
+    <h2>How It Works</h2>
+    <div class="features">
+      <div class="feature-card">
+        <h3>Post Your Doubts</h3>
+        <p>Juniors can post doubts and select whether to send to all seniors or one-to-one chat.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Answer & Earn Points</h3>
+        <p>Seniors can answer doubts and earn points & badges based on feedback from juniors.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Leaderboard</h3>
+        <p>Track the top seniors helping the community and showcase your achievements.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Jitsi Integration</h3>
+        <p>Start one-to-one or group meetings with embedded Jitsi sessions for live doubt solving.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2025 DoubtLink. All Rights Reserved.
+  </footer>
+  <script src="/socket.io/socket.io.js"></script>
+<script src="/main.js"></script>
+
+</body>
+</html>

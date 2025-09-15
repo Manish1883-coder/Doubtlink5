@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard - DoubtLink</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #fff;
+    }
+
+    header {
+      background: linear-gradient(90deg, #6a0dad, #4b0082);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    header nav a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 1.5rem;
+      font-weight: bold;
+    }
+
+    header nav a:hover {
+      color: #ff69b4;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    h2 {
+      text-align: center;
+      color: #ff69b4;
+      margin-bottom: 2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #1f1f1f;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+    }
+
+    th {
+      background: linear-gradient(90deg, #6a0dad, #4b0082);
+    }
+
+    tr:nth-child(odd) td {
+      background-color: #2a2a2a;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #1f1f1f;
+    }
+
+    tr.top1 td {
+      background: gold;
+      color: #000;
+      font-weight: bold;
+    }
+
+    tr.top2 td {
+      background: silver;
+      color: #000;
+      font-weight: bold;
+    }
+
+    tr.top3 td {
+      background: #cd7f32; /* bronze */
+      color: #000;
+      font-weight: bold;
+    }
+
+    @media(max-width: 768px){
+      table, th, td {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DoubtLink</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="signup.html">Sign Up</a>
+      <a href="login.html">Login</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <h2>Leaderboard - Top Seniors</h2>
+    <table id="leaderboardTable">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Senior Name</th>
+          <th>Points</th>
+          <th>Badges</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Leaderboard entries will be added here dynamically -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Demo leaderboard data
+    const seniors = [
+      { name: 'Senior A', points: 20, badges: 3 },
+      { name: 'Senior B', points: 15, badges: 2 },
+      { name: 'Senior C', points: 10, badges: 2 },
+      { name: 'Senior D', points: 7, badges: 1 },
+      { name: 'Senior E', points: 4, badges: 1 }
+    ];
+
+    // Sort descending by points
+    seniors.sort((a,b) => b.points - a.points);
+
+    const tbody = document.querySelector('#leaderboardTable tbody');
+
+    seniors.forEach((s, index) => {
+      const tr = document.createElement('tr');
+      if(index === 0) tr.className = 'top1';
+      else if(index === 1) tr.className = 'top2';
+      else if(index === 2) tr.className = 'top3';
+
+      // Create stars for badges
+      let badgeStars = '';
+      for(let i=0; i<s.badges; i++){
+        badgeStars += '★ '; // one star per badge
+      }
+
+      tr.innerHTML = `
+        <td>${index+1}</td>
+        <td>${s.name}</td>
+        <td>${s.points}</td>
+        <td style="color: gold; font-size: 1.2rem;">${badgeStars.trim()}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  </script>
+  <script src="/socket.io/socket.io.js"></script>
+<script src="/main.js"></script>
+
+</body>
+</html>

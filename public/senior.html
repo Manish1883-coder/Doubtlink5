@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Senior Profile - DoubtLink</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #fff;
+    }
+    header {
+      background: linear-gradient(90deg, #6a0dad, #4b0082);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+    header nav a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 1.5rem;
+      font-weight: bold;
+    }
+    header nav a:hover {
+      color: #ff69b4;
+    }
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .profile-card {
+      background-color: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .profile-card h2 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #ff69b4;
+    }
+    .profile-card p {
+      margin: 0.3rem 0;
+      font-size: 1.1rem;
+    }
+    .points-badges {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      background-color: #1f1f1f;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    .points-badges div {
+      text-align: center;
+    }
+    .points-badges h3 {
+      margin: 0.5rem 0;
+      color: #ff69b4;
+    }
+    .doubt-list {
+      margin-top: 2rem;
+    }
+    .doubt-card {
+      background-color: #1f1f1f;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .doubt-card h4 {
+      margin: 0 0 0.5rem 0;
+      color: #ff69b4;
+    }
+    .doubt-card p {
+      margin: 0.3rem 0;
+    }
+    .reply-section {
+      margin-top: 0.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+    .reply-section input {
+      flex: 1;
+      padding: 0.4rem;
+      border-radius: 5px;
+      border: none;
+      background-color: #2a2a2a;
+      color: #fff;
+    }
+    .reply-section button {
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #6a0dad, #4b0082);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .meeting-btn {
+      margin-top: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #ff69b4, #ff1493);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-block;
+    }
+    .delete-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: red;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0.3rem 0.6rem;
+      border: none;
+      border-radius: 5px;
+    }
+    .group-meeting {
+      background-color: #1f1f1f;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+    }
+    .image-preview img {
+      max-width: 200px;
+      margin-top: 0.5rem;
+      border-radius: 6px;
+      display: block;
+    }
+    .image-preview a {
+      color: #ff69b4;
+      display: block;
+      margin-top: 0.2rem;
+      text-decoration: none;
+    }
+    @media(max-width: 768px){
+      .points-badges {
+        flex-direction: column;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DoubtLink</h1>
+    <nav>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="index.html">Logout</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <!-- Profile Info Section -->
+    <div class="profile-card">
+      <h2 id="seniorName">Senior Name</h2>
+      <p id="seniorYear">Year: 4th Year</p>
+      <p id="seniorCourse">Course: B.Tech IT</p>
+    </div>
+
+    <div class="points-badges">
+      <div>
+        <h3>Points</h3>
+        <p id="points">0</p>
+      </div>
+      <div>
+        <h3>Badges</h3>
+        <p id="badges">None</p>
+      </div>
+    </div>
+
+    <!-- Group Meeting Section -->
+    <div class="group-meeting">
+      <h2>Start Group Meeting</h2>
+      <p>Select juniors and click start:</p>
+      <div id="juniorSelection"></div>
+      <button class="meeting-btn" onclick="startGroupMeeting()">Start Meeting</button>
+    </div>
+
+    <div class="doubt-list" id="doubtList">
+      <h2>Junior Doubts</h2>
+      <!-- Doubts will appear here dynamically -->
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/main.js"></script>
+  <script>
+    const socket = io();
+    const seniorNameEl = document.getElementById("seniorName");
+    const seniorYearEl = document.getElementById("seniorYear");
+    const seniorCourseEl = document.getElementById("seniorCourse");
+    const doubtList = document.getElementById('doubtList');
+    const juniorSelectionDiv = document.getElementById("juniorSelection");
+
+    const seniorData = JSON.parse(localStorage.getItem("user")) || { name: "Senior Name", year: "4th Year", course: "B.Tech IT" };
+    seniorNameEl.innerText = seniorData.name;
+    seniorYearEl.innerText = "Year: " + seniorData.year;
+    seniorCourseEl.innerText = "Course: " + seniorData.course;
+
+    let points = seniorData.points || 0;
+    let badges = seniorData.badges || 0;
+
+    function updatePointsAndBadges() {
+      document.getElementById('points').innerText = points;
+      const badgeCount = points >= 18 ? 3 : points >= 9 ? 2 : points >= 3 ? 1 : 0;
+      badges = badgeCount;
+      const badgeText = badges === 0 ? 'None' : `${badges} Badge${badges > 1 ? 's' : ''}`;
+      document.getElementById('badges').innerText = badgeText;
+    }
+
+    function generateMeetingLink(roomName="DoubtLinkRoom") {
+      const uniqueId = Math.floor(Math.random() * 100000);
+      return `https://meet.jit.si/${roomName}_${uniqueId}`;
+    }
+
+    function startGroupMeeting() {
+      const selected = [...document.querySelectorAll('.junior-checkbox:checked')].map(cb => cb.value);
+      if(selected.length === 0){
+        alert("Select at least one junior.");
+        return;
+      }
+      const link = generateMeetingLink("GroupMeet");
+      alert(`Meeting started with: ${selected.join(", ")}\nLink: ${link}`);
+      window.open(link, "_blank");
+    }
+
+    function createDoubtCard(juniorName, text, imageFile=null) {
+      const card = document.createElement('div');
+      card.className = 'doubt-card';
+
+      const h4 = document.createElement('h4');
+      h4.innerText = `${juniorName} asked:`;
+
+      const pText = document.createElement('p');
+      pText.innerText = `Doubt: ${text}`;
+
+      const imgDiv = document.createElement('div');
+      imgDiv.className = 'image-preview';
+      if(imageFile){
+        const reader = new FileReader();
+        reader.onload = function(e){
+          imgDiv.innerHTML = `<img src="${e.target.result}" alt="Uploaded Image">
+            <a href="${e.target.result}" download="doubt-image.png">Download Image</a>`;
+        }
+        reader.readAsDataURL(imageFile);
+      }
+
+      const replyDiv = document.createElement('div');
+      replyDiv.className = 'reply-section';
+      const replyInput = document.createElement('input');
+      replyInput.placeholder = 'Write your answer';
+      const replyBtn = document.createElement('button');
+      replyBtn.innerText = 'Reply';
+      replyBtn.onclick = () => {
+        if(replyInput.value.trim() !== ''){
+          alert(`Reply sent: ${replyInput.value}`);
+          replyInput.value = '';
+          points += 1;
+          updatePointsAndBadges();
+          // Optionally emit reply to backend
+          // socket.emit('sendReply', { juniorName, reply: replyInput.value });
+        } else {
+          alert('Enter an answer');
+        }
+      };
+      replyDiv.appendChild(replyInput);
+      replyDiv.appendChild(replyBtn);
+
+      const meetBtn = document.createElement('button');
+      meetBtn.className = 'meeting-btn';
+      meetBtn.innerText = `Start Meeting with ${juniorName}`;
+      meetBtn.onclick = () => {
+        const link = generateMeetingLink(juniorName.replace(/\s+/g, ''));
+        alert(`Meeting started with ${juniorName}\nLink: ${link}`);
+        window.open(link, "_blank");
+      };
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.innerText = 'Delete';
+      deleteBtn.onclick = () => card.remove();
+
+      card.appendChild(h4);
+      card.appendChild(pText);
+      card.appendChild(imgDiv);
+      card.appendChild(replyDiv);
+      card.appendChild(meetBtn);
+      card.appendChild(deleteBtn);
+
+      // Add checkbox for group meeting if not already exists
+      if (![...juniorSelectionDiv.querySelectorAll('input')].some(cb => cb.value === juniorName)) {
+        const checkboxDiv = document.createElement("div");
+        checkboxDiv.innerHTML = `<label><input type="checkbox" class="junior-checkbox" value="${juniorName}"> ${juniorName}</label>`;
+        juniorSelectionDiv.appendChild(checkboxDiv);
+      }
+
+      doubtList.appendChild(card);
+    }
+
+    updatePointsAndBadges();
+
+    // Listen for junior doubts via socket.io
+    socket.on('receiveMessage', (msg) => {
+      console.log('New doubt:', msg);
+      createDoubtCard(msg.juniorName, msg.doubtText, msg.imageFile || null);
+    });
+  </script>
+</body>
+</html>
