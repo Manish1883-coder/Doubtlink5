@@ -9,6 +9,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 dotenv.config();
 const app = express();
@@ -18,7 +19,13 @@ const io = new Server(server, { cors: { origin: "*", methods: ["GET","POST"] } }
 // ---------------------- MIDDLEWARE ----------------------
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // serve uploaded images
+
+// Ensure uploads folder exists
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+
+// Serve uploaded images
+app.use("/uploads", express.static(uploadsDir));
 
 // Multer setup for image uploads
 const storage = multer.diskStorage({
@@ -32,7 +39,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Serve frontend files from "public"
-app.use(express.static(path.join(__dirname, "public")));
+const publicDir = path.join(__dirname, "public");
+app.use(express.static(publicDir));
 
 // ---------------------- MODELS ----------------------
 const User = require("./models/User");
@@ -197,10 +205,14 @@ io.on("connection", (socket) => {
 });
 
 // ---------- FRONTEND ROUTES ----------
-app.get(/^\/(?!api|signup|login|doubts|leaderboard|start-meeting).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+app.get("*", (req, res) => {
+  // If route starts with /api or /uploads, skip
+  if (req.path.startsWith("/api") || req.path.startsWith("/uploads") || req.path.startsWith("/signup") || req.path.startsWith("/login") || req.path.startsWith("/doubts") || req.path.startsWith("/leaderboard") || req.path.startsWith("/start-meeting")) {
+    return res.status(404).json({ error: "Not Found" });
+  }
+  res.sendFile(path.join(publicDir, "index.html"));
 });
 
 // ---------------------- START SERVER ----------------------
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
