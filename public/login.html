@@ -119,7 +119,7 @@
 
   <div class="login-container">
     <h2>Login</h2>
-    <form id="loginForm" action="junior.html" method="GET">
+    <form id="loginForm">
       <label for="username">Username</label>
       <input type="text" id="username" name="username" placeholder="Enter your username" required>
 
@@ -132,15 +132,40 @@
   </div>
 
   <script>
-    // Frontend simulation only, no hashing yet
-    document.getElementById('loginForm').addEventListener('submit', function(e){
+    document.getElementById('loginForm').addEventListener('submit', async function(e){
       e.preventDefault();
-      const username = document.getElementById('username').value;
-      // For demo, redirect based on username (just simulation)
-      if(username.toLowerCase().includes("junior")){
-        window.location.href = "junior.html";
-      } else {
-        window.location.href = "senior.html";
+
+      const loginData = {
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value
+      };
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(loginData)
+        });
+
+        const data = await res.json();
+
+        if(res.ok){
+          alert("Login successful!");
+
+          // Redirect user based on role
+          if(data.role === "junior"){
+            window.location.href = "junior.html";
+          } else if(data.role === "senior"){
+            window.location.href = "senior.html";
+          } else {
+            alert("Role not found. Contact admin.");
+          }
+        } else {
+          alert(data.message || "Invalid credentials");
+        }
+      } catch(err){
+        alert("Error connecting to server");
+        console.error(err);
       }
     });
   </script>

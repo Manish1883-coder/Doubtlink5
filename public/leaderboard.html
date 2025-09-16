@@ -87,7 +87,7 @@
     }
 
     tr.top3 td {
-      background: #cd7f32; /* bronze */
+      background: #cd7f32;
       color: #000;
       font-weight: bold;
     }
@@ -126,44 +126,68 @@
     </table>
   </div>
 
-  <script>
-    // Demo leaderboard data
-    const seniors = [
-      { name: 'Senior A', points: 20, badges: 3 },
-      { name: 'Senior B', points: 15, badges: 2 },
-      { name: 'Senior C', points: 10, badges: 2 },
-      { name: 'Senior D', points: 7, badges: 1 },
-      { name: 'Senior E', points: 4, badges: 1 }
-    ];
-
-    // Sort descending by points
-    seniors.sort((a,b) => b.points - a.points);
-
-    const tbody = document.querySelector('#leaderboardTable tbody');
-
-    seniors.forEach((s, index) => {
-      const tr = document.createElement('tr');
-      if(index === 0) tr.className = 'top1';
-      else if(index === 1) tr.className = 'top2';
-      else if(index === 2) tr.className = 'top3';
-
-      // Create stars for badges
-      let badgeStars = '';
-      for(let i=0; i<s.badges; i++){
-        badgeStars += '★ '; // one star per badge
-      }
-
-      tr.innerHTML = `
-        <td>${index+1}</td>
-        <td>${s.name}</td>
-        <td>${s.points}</td>
-        <td style="color: gold; font-size: 1.2rem;">${badgeStars.trim()}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  </script>
   <script src="/socket.io/socket.io.js"></script>
-<script src="/main.js"></script>
+  <script>
+    const tbody = document.querySelector('#leaderboardTable tbody');
+    const socket = io();
 
+    let seniors = []; // local copy of seniors
+
+    async function loadLeaderboard() {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch('/seniors', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error("Failed to fetch seniors");
+
+        seniors = await res.json();
+        renderLeaderboard();
+      } catch(err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Failed to load leaderboard</td></tr>`;
+      }
+    }
+
+    function renderLeaderboard() {
+      // Sort by points descending
+      seniors.sort((a,b) => b.points - a.points);
+
+      tbody.innerHTML = ''; // clear table
+
+      seniors.forEach((s, index) => {
+        const tr = document.createElement('tr');
+        if(index === 0) tr.className = 'top1';
+        else if(index === 1) tr.className = 'top2';
+        else if(index === 2) tr.className = 'top3';
+
+        const badgeCount = s.points >= 18 ? 3 : s.points >= 9 ? 2 : s.points >= 3 ? 1 : 0;
+        let badgeStars = '';
+        for(let i=0;i<badgeCount;i++) badgeStars += '★ ';
+
+        tr.innerHTML = `
+          <td>${index+1}</td>
+          <td>${s.username}</td>
+          <td>${s.points}</td>
+          <td style="color: gold; font-size: 1.2rem;">${badgeStars.trim()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Listen for updates when seniors earn points
+    socket.on('pointsUpdated', (updatedSenior) => {
+      const idx = seniors.findIndex(s => s._id === updatedSenior._id);
+      if(idx !== -1){
+        seniors[idx].points = updatedSenior.points;
+      } else {
+        seniors.push(updatedSenior);
+      }
+      renderLeaderboard();
+    });
+
+    loadLeaderboard();
+  </script>
+  <script src="/main.js"></script>
 </body>
 </html>

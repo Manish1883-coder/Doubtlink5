@@ -65,6 +65,26 @@ input, select, textarea {
   color: #fff;
 }
 
+/* Profile Cards */
+.profile-card, .profile-info {
+  background-color: #1f1f1f;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.profile-card h2, .profile-info h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: #ff69b4;
+}
+
+.profile-card p, .profile-info p {
+  margin: 0.3rem 0;
+  font-size: 1.2rem;
+}
+
 /* Doubt Cards */
 .doubt-card {
   background-color: #1f1f1f;
@@ -81,6 +101,32 @@ input, select, textarea {
 
 .doubt-card p {
   margin: 0.3rem 0;
+}
+
+/* Reply Section */
+.reply-section {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.reply-section input {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: none;
+  background-color: #2a2a2a;
+  color: #fff;
+}
+
+.reply-section button {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #6a0dad, #4b0082);
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 /* Feedback Buttons */
@@ -117,6 +163,41 @@ input, select, textarea {
 .points-badges h3 {
   margin: 0.5rem 0;
   color: #ff69b4;
+}
+
+/* Meeting Buttons */
+.meeting-btn {
+  background: linear-gradient(90deg, #ff69b4, #ff1493);
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Image Preview */
+.image-preview img {
+  max-width: 200px;
+  margin-top: 0.5rem;
+  border-radius: 6px;
+  display: block;
+}
+
+.image-preview a {
+  color: #ff69b4;
+  display: block;
+  margin-top: 0.2rem;
+  text-decoration: none;
+}
+
+/* Group Meeting Section */
+.group-meeting {
+  background-color: #1f1f1f;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
 }
 
 /* Table Styling (Leaderboard) */

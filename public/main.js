@@ -1,5 +1,5 @@
 // public/main.js
-const API_BASE = ""; // same origin (your backend + frontend served together)
+const API_BASE = ""; // same origin (frontend + backend served together)
 let token = localStorage.getItem("token");
 let currentUser = JSON.parse(localStorage.getItem("user")) || null;
 
@@ -9,11 +9,11 @@ let currentUser = JSON.parse(localStorage.getItem("user")) || null;
 document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = document.getElementById("username").value;
-  const email = document.getElementById("email")?.value || prompt("Enter email:"); // adjust if missing
+  const email = document.getElementById("email")?.value || prompt("Enter email:");
   const password = document.getElementById("password").value;
   const role = document.getElementById("role").value;
-  const year = document.getElementById("year").value;
-  const course = document.getElementById("course").value;
+  const year = document.getElementById("year")?.value || "";
+  const course = document.getElementById("course")?.value || "";
 
   try {
     const res = await fetch(`${API_BASE}/signup`, {
@@ -38,7 +38,7 @@ document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
 // Login
 document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = document.getElementById("username").value; // backend expects email
+  const email = document.getElementById("username").value;
   const password = document.getElementById("password").value;
 
   try {
@@ -72,7 +72,7 @@ async function postDoubt() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ title: "Doubt", description: input.value }),
+      body: JSON.stringify({ text: input.value }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -100,10 +100,10 @@ async function loadDoubts() {
       const div = document.createElement("div");
       div.className = "doubt-card";
       div.innerHTML = `
-        <h4>${d.title}</h4>
-        <p>${d.description}</p>
+        <h4>${d.title || "Doubt"}</h4>
+        <p>${d.text || d.description}</p>
         <p><strong>Asked by:</strong> ${d.askedBy?.name}</p>
-        <p><strong>Answer:</strong> ${d.answer || "<em>Not answered yet</em>"}</p>
+        <p><strong>Answer:</strong> ${d.reply || "<em>Not answered yet</em>"}</p>
         ${d.meetingLink ? `<a href="${d.meetingLink}" target="_blank" class="meeting-btn">Join Meeting</a>` : ""}
       `;
       list.appendChild(div);
@@ -130,6 +130,7 @@ async function answerDoubt(doubtId) {
     if (res.ok) {
       alert("Answer submitted ✅");
       loadDoubts();
+      loadLeaderboard();
     } else {
       alert(data.error || "Failed to answer");
     }
@@ -170,12 +171,12 @@ async function loadLeaderboard() {
       if (index === 0) tr.className = "top1";
       else if (index === 1) tr.className = "top2";
       else if (index === 2) tr.className = "top3";
-      let badgeStars = "★".repeat(entry.badges || 0);
+      let badgeStars = "★".repeat(entry.senior?.badges || 0);
       tr.innerHTML = `
         <td>${index + 1}</td>
         <td>${entry.senior?.name || "Unknown"}</td>
         <td>${entry.points}</td>
-        <td style="color: gold;">${badgeStars}</td>
+        <td style="color: gold; font-size: 1.2rem;">${badgeStars}</td>
       `;
       tableBody.appendChild(tr);
     });
@@ -189,7 +190,18 @@ const socket = io();
 
 socket.on("receiveMessage", (msg) => {
   console.log("New message:", msg);
-  // Optionally update chat UI
+  // Update chat UI if chat window exists
+  const chatBox = document.getElementById("chatBox");
+  if (!chatBox) return;
+  const div = document.createElement("div");
+  div.className = "chat-msg";
+  div.innerHTML = `
+    <strong>${msg.senderName || "User"}:</strong> ${msg.message || ""}
+    ${msg.imageUrl ? `<br><img src="${msg.imageUrl}" alt="image" style="max-width:150px;">` : ""}
+    ${msg.meetingLink ? `<br><a href="${msg.meetingLink}" target="_blank">Join Meeting</a>` : ""}
+  `;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
 });
 
 // ---------------- AUTO INIT ----------------

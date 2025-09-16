@@ -89,7 +89,7 @@ app.post("/signup", async (req, res) => {
     if (existing) return res.status(400).json({ error: "Email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword, role, year, course });
+    const user = await User.create({ name, email, password: hashedPassword, role, year, course, points: 0 });
     const token = generateToken(user._id);
     res.json({ user, token });
   } catch (err) {
@@ -114,23 +114,64 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// ---------- GET CURRENT USER ----------
+app.get("/me", authenticate, async (req, res) => {
+  res.json(req.user);
+});
+
+// ---------- GET SENIORS ----------
+app.get("/seniors", authenticate, async (req, res) => {
+  try {
+    const seniors = await User.find({ role: "senior" }, "name year course points badges");
+    res.json(seniors);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---------- DOUBTS ----------
-app.post("/doubts", authenticate, async (req, res) => {
+app.post("/doubts", authenticate, upload.single("image"), async (req, res) => {
   try {
     if (req.user.role !== "junior") return res.status(403).json({ error: "Only juniors can post doubts" });
-    const { title, description } = req.body;
-    const doubt = await Doubt.create({ title, description, askedBy: req.user._id });
-    res.json(doubt);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const { text, senior } = req.body;
+
+    let imageUrl = "";
+    if (req.file) imageUrl = `/uploads/${req.file.filename}`;
+
+    const doubt = await Doubt.create({
+      text,
+      askedBy: req.user._id,
+      seniorAssigned: senior,
+      imageUrl
+    });
+
+    // Notify via socket
+    const populatedDoubt = await doubt.populate("askedBy", "name");
+    io.emit("receiveMessage", { 
+      juniorName: populatedDoubt.askedBy.name, 
+      doubtText: populatedDoubt.text, 
+      imageFile: imageUrl ? imageUrl : null,
+      doubtId: populatedDoubt._id
+    });
+
+    res.json(populatedDoubt);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get("/doubts", authenticate, async (req, res) => {
   try {
-    const doubts = await Doubt.find().populate("askedBy", "name role").populate("answeredBy", "name role");
+    const doubts = await Doubt.find()
+      .populate("askedBy", "name role")
+      .populate("answeredBy", "name role");
     res.json(doubts);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// ---------- ANSWER DOUBT ----------
 app.post("/doubts/:id/answer", authenticate, async (req, res) => {
   try {
     if (req.user.role !== "senior") return res.status(403).json({ error: "Only seniors can answer" });
@@ -138,7 +179,7 @@ app.post("/doubts/:id/answer", authenticate, async (req, res) => {
     const doubt = await Doubt.findById(req.params.id);
     if (!doubt) return res.status(404).json({ error: "Doubt not found" });
 
-    doubt.answer = answer;
+    doubt.reply = answer;
     doubt.answeredBy = req.user._id;
     doubt.isSolved = true;
     await doubt.save();
@@ -146,9 +187,12 @@ app.post("/doubts/:id/answer", authenticate, async (req, res) => {
     req.user.points += 1;
     await req.user.save();
 
+    // Update leaderboard
     let leaderboard = await Leaderboard.findOne({ senior: req.user._id });
     if (!leaderboard) leaderboard = await Leaderboard.create({ senior: req.user._id, points: req.user.points });
     else { leaderboard.points = req.user.points; await leaderboard.save(); }
+
+    io.emit("doubtReplied", doubt);
 
     res.json(doubt);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -179,6 +223,14 @@ app.post("/start-meeting/:doubtId", authenticate, async (req, res) => {
       message: `${req.user.name} started a meeting for this doubt.`
     });
 
+    io.emit("receiveMessage", {
+      doubtId: doubt._id,
+      senderId: req.user._id,
+      message: `${req.user.name} started a meeting.`,
+      type: "meeting-invite",
+      meetingLink
+    });
+
     res.json({ message: "Meeting started ✅", meetingLink });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -186,7 +238,9 @@ app.post("/start-meeting/:doubtId", authenticate, async (req, res) => {
 // ---------- LEADERBOARD ----------
 app.get("/leaderboard", async (req, res) => {
   try {
-    const leaderboard = await Leaderboard.find().populate("senior", "name points badges").sort({ points: -1 });
+    const leaderboard = await Leaderboard.find()
+      .populate("senior", "name points badges")
+      .sort({ points: -1 });
     res.json(leaderboard);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -206,7 +260,6 @@ io.on("connection", (socket) => {
 
 // ---------- FRONTEND ROUTES ----------
 app.get("*", (req, res) => {
-  // If route starts with /api or /uploads, skip
   if (req.path.startsWith("/api") || req.path.startsWith("/uploads") || req.path.startsWith("/signup") || req.path.startsWith("/login") || req.path.startsWith("/doubts") || req.path.startsWith("/leaderboard") || req.path.startsWith("/start-meeting")) {
     return res.status(404).json({ error: "Not Found" });
   }

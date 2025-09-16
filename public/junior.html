@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -6,120 +6,36 @@
   <title>Junior Profile - DoubtLink</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #121212;
-      color: #fff;
-    }
-    header {
-      background: linear-gradient(90deg, #6a0dad, #4b0082);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 2rem;
-    }
-    header nav a {
-      color: #fff;
-      text-decoration: none;
-      margin-left: 1.5rem;
-      font-weight: bold;
-    }
-    header nav a:hover {
-      color: #ff69b4;
-    }
-    .container {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    .profile-info {
-      background-color: #1f1f1f;
-      padding: 1rem;
-      border-radius: 10px;
-      margin-bottom: 2rem;
-    }
-    .profile-info h2 {
-      margin: 0 0 0.5rem 0;
-      color: #ff69b4;
-    }
-    .profile-info p {
-      margin: 0.3rem 0;
-    }
-    .doubt-section {
-      background-color: #1f1f1f;
-      padding: 1rem;
-      border-radius: 10px;
-      margin-bottom: 2rem;
-    }
-    .doubt-section input, 
-    .doubt-section select {
-      padding: 0.5rem;
-      border-radius: 5px;
-      border: none;
-      background-color: #2a2a2a;
-      color: #fff;
-      margin-right: 0.5rem;
-    }
-    .doubt-section input {
-      width: 40%;
-    }
-    .doubt-section select {
-      width: 25%;
-    }
-    .doubt-section button {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 5px;
-      background: linear-gradient(90deg, #6a0dad, #4b0082);
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .doubt-list {
-      margin-top: 2rem;
-    }
-    .doubt-card {
-      background-color: #1f1f1f;
-      padding: 1rem;
-      border-radius: 10px;
-      margin-bottom: 1rem;
-      position: relative;
-    }
-    .doubt-card h4 {
-      margin: 0 0 0.5rem 0;
-      color: #ff69b4;
-    }
-    .doubt-card p {
-      margin: 0.3rem 0;
-    }
-    .meeting-btn {
-      margin-top: 0.5rem;
-      padding: 0.4rem 0.8rem;
-      border: none;
-      border-radius: 5px;
-      background: linear-gradient(90deg, #ff69b4, #ff1493);
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-      display: inline-block;
-    }
-    .image-preview img {
-      max-width: 200px;
-      margin-top: 0.5rem;
-      border-radius: 6px;
-      display: block;
-    }
-    .image-preview a {
-      color: #ff69b4;
-      display: block;
-      margin-top: 0.2rem;
-      text-decoration: none;
-    }
+    body { margin:0; font-family:'Segoe UI',sans-serif; background:#121212; color:#fff; }
+    header { background:linear-gradient(90deg,#6a0dad,#4b0082); padding:1rem 2rem; display:flex; justify-content:space-between; align-items:center; }
+    header h1{ margin:0; font-size:2rem; }
+    header nav a{ color:#fff; text-decoration:none; margin-left:1.5rem; font-weight:bold; }
+    header nav a:hover{ color:#ff69b4; }
+
+    .container{ max-width:900px; margin:2rem auto; padding:0 1rem; }
+    .profile-info{ background:#1f1f1f; padding:1rem; border-radius:10px; margin-bottom:2rem; }
+    .profile-info h2{ margin:0 0 .5rem 0; color:#ff69b4; }
+    .profile-info p{ margin:.3rem 0; }
+
+    .doubt-section{ background:#1f1f1f; padding:1rem; border-radius:10px; margin-bottom:2rem; }
+    .doubt-section input,.doubt-section select{ padding:.5rem; border-radius:5px; border:none; background:#2a2a2a; color:#fff; margin-right:.5rem; }
+    .doubt-section input[type="text"]{ width:40%; }
+    .doubt-section select{ width:25%; }
+    .doubt-section button{ padding:.5rem 1rem; border:none; border-radius:5px; background:linear-gradient(90deg,#6a0dad,#4b0082); color:#fff; font-weight:bold; cursor:pointer; }
+
+    .doubt-list{ margin-top:2rem; }
+    .doubt-card{ background:#1f1f1f; padding:1rem; border-radius:10px; margin-bottom:1rem; }
+    .doubt-card h4{ margin:0 0 .5rem 0; color:#ff69b4; }
+    .doubt-card p{ margin:.3rem 0; }
+    .image-preview img{ max-width:200px; margin-top:.5rem; border-radius:6px; display:block; }
+    .image-preview a{ color:#ff69b4; display:block; margin-top:.2rem; text-decoration:none; }
+    .messages{ margin-top:.6rem; display:flex; flex-direction:column; gap:.4rem; }
+    .msg{ padding:.4rem .6rem; border-radius:8px; max-width:70%; }
+    .me{ background:#2a2a2a; align-self:flex-end; }
+    .other{ background:#23232f; align-self:flex-start; }
+    .reply-actions{ margin-top:.6rem; display:flex; gap:.5rem; flex-wrap:wrap; }
+    .reply-actions input[type="text"]{ flex:1; padding:.4rem; border-radius:5px; border:none; background:#2a2a2a; color:#fff; }
+    .meeting-btn{ margin-top:.5rem; padding:.4rem .8rem; border:none; border-radius:5px; background:linear-gradient(90deg,#ff69b4,#ff1493); color:#fff; font-weight:bold; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -135,8 +51,8 @@
     <!-- Junior Profile Info -->
     <div class="profile-info">
       <h2 id="juniorName">Junior Name</h2>
-      <p><strong>Year:</strong> <span id="juniorYear">2nd Year</span></p>
-      <p><strong>Course:</strong> <span id="juniorCourse">B.Tech CSE</span></p>
+      <p><strong>Year:</strong> <span id="juniorYear">Loading...</span></p>
+      <p><strong>Course:</strong> <span id="juniorCourse">Loading...</span></p>
     </div>
 
     <!-- Doubt Asking Section -->
@@ -156,9 +72,10 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/main.js"></script>
   <script>
     const socket = io();
+    const token = localStorage.getItem("token");
+    let currentUser = null;
 
     const juniorNameEl = document.getElementById('juniorName');
     const juniorYearEl = document.getElementById('juniorYear');
@@ -167,109 +84,163 @@
     const postDoubtBtn = document.getElementById('postDoubtBtn');
     const seniorSelect = document.getElementById('seniorSelect');
 
-    // Use logged-in user from main.js
-    const juniorData = currentUser || { name: "John Doe", year: "2nd Year", course: "B.Tech CSE" };
-    juniorNameEl.innerText = juniorData.name;
-    juniorYearEl.innerText = juniorData.year;
-    juniorCourseEl.innerText = juniorData.course;
+    // Helper API call
+    async function api(path, options={}) {
+      const headers = options.headers || {};
+      headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(path, { ...options, headers });
+      return res.json();
+    }
 
-    // Populate seniors dynamically from backend (optional)
+    // Load profile
+    async function loadProfile() {
+      const res = await fetch('/me', { headers: { Authorization: `Bearer ${token}` }});
+      if (res.ok) {
+        currentUser = await res.json();
+        juniorNameEl.innerText = currentUser.username;
+        juniorYearEl.innerText = currentUser.year;
+        juniorCourseEl.innerText = currentUser.course;
+      }
+    }
+
+    // Load seniors
     async function loadSeniors() {
-      try {
-        const res = await fetch(`${API_BASE}/seniors`, { headers: { Authorization: `Bearer ${token}` }});
-        if(res.ok){
-          const seniors = await res.json();
-          seniors.forEach(s => {
-            const option = document.createElement('option');
-            option.value = s.name;
-            option.innerText = s.name;
-            seniorSelect.appendChild(option);
-          });
-        }
-      } catch(err) { console.error(err); }
-    }
-    loadSeniors();
-
-    function generateMeetingLink(roomName="DoubtLinkRoom") {
-      const uniqueId = Math.floor(Math.random() * 100000);
-      return `https://meet.jit.si/${roomName}_${uniqueId}`;
+      const res = await fetch('/seniors', { headers: { Authorization: `Bearer ${token}` }});
+      if (res.ok) {
+        const seniors = await res.json();
+        seniors.forEach(s => {
+          const option = document.createElement('option');
+          option.value = s._id;
+          option.innerText = s.username;
+          seniorSelect.appendChild(option);
+        });
+      }
     }
 
-    function createDoubtCard(doubtText, senior, imageFile=null) {
+    // Render one doubt
+    function renderDoubt(doubt) {
       const card = document.createElement('div');
       card.className = 'doubt-card';
+      card.dataset.id = doubt._id;
 
       const h4 = document.createElement('h4');
       h4.innerText = "You asked:";
+      card.appendChild(h4);
 
       const p = document.createElement('p');
-      p.innerText = doubtText;
+      p.innerText = doubt.text;
+      card.appendChild(p);
 
-      const imgDiv = document.createElement('div');
-      imgDiv.className = 'image-preview';
-      if(imageFile){
-        const reader = new FileReader();
-        reader.onload = function(e){
-          imgDiv.innerHTML = `
-            <img src="${e.target.result}" alt="Uploaded Image">
-            <a href="${e.target.result}" download="doubt-image.png">Download Image</a>
-          `;
-        }
-        reader.readAsDataURL(imageFile);
+      if (doubt.imageUrl) {
+        const imgDiv = document.createElement('div');
+        imgDiv.className = 'image-preview';
+        imgDiv.innerHTML = `
+          <img src="${doubt.imageUrl}" alt="Image">
+          <a href="${doubt.imageUrl}" download>Download Image</a>
+        `;
+        card.appendChild(imgDiv);
       }
 
-      const reply = document.createElement('p');
-      reply.innerHTML = "<em>Waiting for senior’s reply...</em>";
-      reply.className = "reply-text";
+      // Messages container
+      const messagesDiv = document.createElement('div');
+      messagesDiv.className = 'messages';
+      if (doubt.messages) {
+        doubt.messages.forEach(m => appendMessage(messagesDiv, m, m.sender === currentUser._id));
+      }
+      card.appendChild(messagesDiv);
 
+      // Reply actions
+      const replyActions = document.createElement('div');
+      replyActions.className = 'reply-actions';
+      const msgInput = document.createElement('input');
+      msgInput.type = 'text';
+      msgInput.placeholder = 'Type your message...';
+      const imgInput = document.createElement('input');
+      imgInput.type = 'file';
+      imgInput.accept = 'image/*';
+      const sendBtn = document.createElement('button');
+      sendBtn.innerText = 'Send';
+      sendBtn.onclick = async () => {
+        const text = msgInput.value.trim();
+        const file = imgInput.files[0];
+        if (!text && !file) return;
+        let imageUrl = null;
+        if (file) {
+          const fd = new FormData();
+          fd.append('image', file);
+          const upRes = await fetch('/upload', { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body:fd });
+          const upData = await upRes.json();
+          imageUrl = upData.url;
+        }
+        socket.emit('chat:send', { doubtId:doubt._id, text, imageUrl });
+        msgInput.value = '';
+        imgInput.value = '';
+      };
+      replyActions.appendChild(msgInput);
+      replyActions.appendChild(imgInput);
+      replyActions.appendChild(sendBtn);
+      card.appendChild(replyActions);
+
+      // Meeting button
       const meetBtn = document.createElement('button');
       meetBtn.className = 'meeting-btn';
-      meetBtn.innerText = `Start Meeting with ${senior}`;
-      meetBtn.style.display = "none";
-
-      card.appendChild(h4);
-      card.appendChild(p);
-      card.appendChild(imgDiv);
-      card.appendChild(reply);
-      if(senior !== "all") card.appendChild(meetBtn);
+      meetBtn.innerText = 'Start Meeting';
+      meetBtn.onclick = () => {
+        const link = `https://meet.jit.si/DoubtLink_${doubt._id}`;
+        window.open(link, "_blank");
+      };
+      card.appendChild(meetBtn);
 
       doubtListEl.appendChild(card);
-
-      if(senior !== "all") {
-        meetBtn.style.display = "inline-block";
-        meetBtn.onclick = () => {
-          const link = generateMeetingLink(senior.replace(/\s+/g, ''));
-          alert(`Meeting started with ${senior}\nLink: ${link}`);
-          window.open(link, "_blank");
-        }
-      }
     }
 
-    postDoubtBtn.addEventListener('click', () => {
-      const doubtInput = document.getElementById('doubtInput');
-      const senior = seniorSelect.value;
-      const file = document.getElementById('imageInput').files[0];
-
-      const doubtText = doubtInput.value.trim();
-      if(!doubtText && !file) {
-        alert("Enter a doubt or upload an image!");
-        return;
+    // Append one message
+    function appendMessage(container, msg, isMe) {
+      const div = document.createElement('div');
+      div.className = `msg ${isMe ? 'me':'other'}`;
+      if (msg.text) div.innerText = msg.text;
+      if (msg.imageUrl) {
+        div.innerHTML = `<img src="${msg.imageUrl}" style="max-width:150px;border-radius:6px;" />`;
       }
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
 
-      createDoubtCard(doubtText, senior, file);
+    // Post doubt
+    postDoubtBtn.addEventListener('click', async () => {
+      const doubtInput = document.getElementById('doubtInput');
+      const file = document.getElementById('imageInput').files[0];
+      const senior = seniorSelect.value;
+      if (!doubtInput.value.trim() && !file) return alert("Enter doubt or upload image");
 
-      // Reset inputs
+      const formData = new FormData();
+      formData.append('text', doubtInput.value);
+      formData.append('senior', senior);
+      if (file) formData.append('image', file);
+
+      const res = await fetch('/doubts', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+      const doubt = await res.json();
+      renderDoubt(doubt);
       doubtInput.value = '';
       document.getElementById('imageInput').value = '';
-
-      // Optionally emit to backend
-      // socket.emit('sendMessage', { doubtText, senior });
     });
 
-    socket.on('receiveMessage', (msg) => {
-      console.log('New message:', msg);
-      // Implement logic to update relevant doubt card if needed
+    // Listen for replies / chat
+    socket.on('chat:receive', ({ doubtId, message }) => {
+      const card = document.querySelector(`.doubt-card[data-id="${doubtId}"]`);
+      if (card) {
+        const messagesDiv = card.querySelector('.messages');
+        appendMessage(messagesDiv, message, message.sender === currentUser._id);
+      }
     });
+
+    // Init
+    loadProfile();
+    loadSeniors();
   </script>
 </body>
 </html>
