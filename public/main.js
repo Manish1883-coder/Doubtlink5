@@ -1,5 +1,5 @@
 // public/main.js
-const API_BASE = ""; // same origin (frontend + backend served together)
+const API_BASE = "https://doubtlink5.onrender.com"; // same origin (frontend + backend served together)
 let token = localStorage.getItem("token");
 let currentUser = JSON.parse(localStorage.getItem("user")) || null;
 
