@@ -259,12 +259,13 @@ io.on("connection", (socket) => {
 });
 
 // ---------- FRONTEND ROUTES ----------
-app.get("*", (req, res) => {
-  if (req.path.startsWith("/api") || req.path.startsWith("/uploads") || req.path.startsWith("/signup") || req.path.startsWith("/login") || req.path.startsWith("/doubts") || req.path.startsWith("/leaderboard") || req.path.startsWith("/start-meeting")) {
-    return res.status(404).json({ error: "Not Found" });
-  }
+// Serve index.html for any frontend route
+app.use((req, res, next) => {
+  const apiPaths = ["/api", "/uploads", "/signup", "/login", "/doubts", "/leaderboard", "/start-meeting"];
+  if (apiPaths.some(p => req.path.startsWith(p))) return next(); // skip backend routes
   res.sendFile(path.join(publicDir, "index.html"));
 });
+
 
 // ---------------------- START SERVER ----------------------
 const PORT = process.env.PORT || 5000;
