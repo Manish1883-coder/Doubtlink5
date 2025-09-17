@@ -117,57 +117,59 @@
     </nav>
   </header>
 
-  <div class="login-container">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <label for="username">Username</label>
-      <input type="text" id="username" name="username" placeholder="Enter your username" required>
+<div class="login-container">
+  <h2>Login</h2>
+  <form id="loginForm">
+    <label for="email">Email ID</label>
+    <input type="email" id="email" name="email" placeholder="Enter your email" required>
 
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" placeholder="Enter your password" required>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" placeholder="Enter your password" required>
 
-      <button type="submit">Login</button>
-    </form>
-    <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
-  </div>
+    <button type="submit">Login</button>
+  </form>
+  <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+</div>
+
 
   <script>
-    document.getElementById('loginForm').addEventListener('submit', async function(e){
-      e.preventDefault();
+document.getElementById('loginForm').addEventListener('submit', async function(e){
+  e.preventDefault();
 
-      const loginData = {
-        username: document.getElementById('username').value,
-        password: document.getElementById('password').value
-      };
+  const loginData = {
+    email: document.getElementById('email').value,  // updated from username → email
+    password: document.getElementById('password').value
+  };
 
-      try {
-        const res = await fetch('/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(loginData)
-        });
-
-        const data = await res.json();
-
-        if(res.ok){
-          alert("Login successful!");
-
-          // Redirect user based on role
-          if(data.role === "junior"){
-            window.location.href = "junior.html";
-          } else if(data.role === "senior"){
-            window.location.href = "senior.html";
-          } else {
-            alert("Role not found. Contact admin.");
-          }
-        } else {
-          alert(data.message || "Invalid credentials");
-        }
-      } catch(err){
-        alert("Error connecting to server");
-        console.error(err);
-      }
+  try {
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(loginData)
     });
-  </script>
+
+    const data = await res.json();
+
+    if(res.ok){
+      alert("Login successful!");
+
+      // Redirect user based on role
+      if(data.user.role === "junior"){
+        window.location.href = "junior.html";
+      } else if(data.user.role === "senior"){
+        window.location.href = "senior.html";
+      } else {
+        alert("Role not found. Contact admin.");
+      }
+    } else {
+      alert(data.error || "Invalid credentials");  // use data.error from backend
+    }
+  } catch(err){
+    alert("Error connecting to server");
+    console.error(err);
+  }
+});
+</script>
+
 </body>
 </html>
