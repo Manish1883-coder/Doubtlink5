@@ -29,16 +29,12 @@ app.use("/uploads", express.static(uploadsDir));
 
 // Multer setup for image uploads
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function(req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  }
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
 });
 const upload = multer({ storage });
 
-// Serve frontend files from "public"
+// Serve frontend files
 const publicDir = path.join(__dirname, "public");
 app.use(express.static(publicDir));
 
@@ -49,18 +45,14 @@ const Message = require("./models/Message");
 const Meeting = require("./models/Meeting");
 const Leaderboard = require("./models/Leaderboard");
 
-// ---------------------- MONGODB CONNECTION ----------------------
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+// ---------------------- MONGODB ----------------------
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
 .then(() => console.log("✅ MongoDB Connected"))
 .catch(err => console.error("❌ DB Error:", err));
 
-// ---------------------- UTILITY FUNCTIONS ----------------------
-const generateToken = (userId) => jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+// ---------------------- UTILS ----------------------
+const generateToken = userId => jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-// JWT Authentication middleware
 const authenticate = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ error: "No token provided" });
@@ -68,18 +60,15 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id);
     next();
-  } catch (err) {
+  } catch {
     res.status(401).json({ error: "Invalid token" });
   }
 };
 
 // ---------------------- ROUTES ----------------------
-
-// Test route
 app.get("/api-test", (req, res) => res.send("DoubtLink backend is running ✅"));
 
 // ---------- AUTH ----------
-// Signup
 app.post("/signup", async (req, res) => {
   try {
     const { name, email, password, role, year, course } = req.body;
@@ -89,15 +78,12 @@ app.post("/signup", async (req, res) => {
     if (existing) return res.status(400).json({ error: "Email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword, role, year, course, points: 0 });
+    const user = await User.create({ name, email, password: hashedPassword, role, year, course, points: 0, badges: 0 });
     const token = generateToken(user._id);
     res.json({ user, token });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Login
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -109,24 +95,35 @@ app.post("/login", async (req, res) => {
 
     const token = generateToken(user._id);
     res.json({ user, token });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ---------- GET CURRENT USER ----------
+// ---------- CURRENT USER ----------
 app.get("/me", authenticate, async (req, res) => {
-  res.json(req.user);
+  const user = await User.findById(req.user._id, "-password");
+  res.json(user);
 });
 
-// ---------- GET SENIORS ----------
+// ---------- SENIORS ----------
 app.get("/seniors", authenticate, async (req, res) => {
   try {
     const seniors = await User.find({ role: "senior" }, "name year course points badges");
     res.json(seniors);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ---------- JUNIORS ----------
+app.get("/juniors", authenticate, async (req, res) => {
+  try {
+    const juniors = await User.find({ role: "junior" }, "name year course");
+    res.json(juniors);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ---------- FILE UPLOAD ----------
+app.post("/upload", authenticate, upload.single("image"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+  res.json({ url: `/uploads/${req.file.filename}` });
 });
 
 // ---------- DOUBTS ----------
@@ -135,40 +132,39 @@ app.post("/doubts", authenticate, upload.single("image"), async (req, res) => {
     if (req.user.role !== "junior") return res.status(403).json({ error: "Only juniors can post doubts" });
     const { text, senior } = req.body;
 
-    let imageUrl = "";
-    if (req.file) imageUrl = `/uploads/${req.file.filename}`;
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : "";
 
     const doubt = await Doubt.create({
       text,
       askedBy: req.user._id,
-      seniorAssigned: senior,
-      imageUrl
+      seniorAssigned: senior === "all" ? null : senior,
+      imageUrl,
+      messages: []
     });
 
-    // Notify via socket
-    const populatedDoubt = await doubt.populate("askedBy", "name");
-    io.emit("receiveMessage", { 
-      juniorName: populatedDoubt.askedBy.name, 
-      doubtText: populatedDoubt.text, 
-      imageFile: imageUrl ? imageUrl : null,
-      doubtId: populatedDoubt._id
+    const populatedDoubt = await doubt.populate("askedBy", "name year course");
+
+    // emit both events so juniors and seniors handle them
+    io.emit("doubt:new", populatedDoubt);
+    io.emit("receiveMessage", {
+      doubtId: populatedDoubt._id,
+      juniorName: populatedDoubt.askedBy.name,
+      doubtText: populatedDoubt.text,
+      imageUrl: populatedDoubt.imageUrl,
+      seniorAssigned: populatedDoubt.seniorAssigned
     });
 
     res.json(populatedDoubt);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get("/doubts", authenticate, async (req, res) => {
   try {
     const doubts = await Doubt.find()
-      .populate("askedBy", "name role")
+      .populate("askedBy", "name year course")
       .populate("answeredBy", "name role");
     res.json(doubts);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ---------- ANSWER DOUBT ----------
@@ -187,7 +183,6 @@ app.post("/doubts/:id/answer", authenticate, async (req, res) => {
     req.user.points += 1;
     await req.user.save();
 
-    // Update leaderboard
     let leaderboard = await Leaderboard.findOne({ senior: req.user._id });
     if (!leaderboard) leaderboard = await Leaderboard.create({ senior: req.user._id, points: req.user.points });
     else { leaderboard.points = req.user.points; await leaderboard.save(); }
@@ -215,14 +210,6 @@ app.post("/start-meeting/:doubtId", authenticate, async (req, res) => {
       meetingLink
     });
 
-    await Message.create({
-      doubtId: doubt._id,
-      sender: req.user._id,
-      type: "meeting-invite",
-      meetingLink,
-      message: `${req.user.name} started a meeting for this doubt.`
-    });
-
     io.emit("receiveMessage", {
       doubtId: doubt._id,
       senderId: req.user._id,
@@ -246,10 +233,10 @@ app.get("/leaderboard", async (req, res) => {
 });
 
 // ---------- CHAT SOCKET.IO ----------
-io.on("connection", (socket) => {
+io.on("connection", socket => {
   console.log("⚡ New client connected:", socket.id);
 
-  socket.on("sendMessage", async (data) => {
+  socket.on("sendMessage", async data => {
     const { doubtId, senderId, message, type, meetingLink, imageUrl } = data;
     const chatMsg = await Message.create({ doubtId, sender: senderId, message, type, meetingLink, imageUrl });
     io.emit("receiveMessage", chatMsg);
@@ -259,13 +246,11 @@ io.on("connection", (socket) => {
 });
 
 // ---------- FRONTEND ROUTES ----------
-// Serve index.html for any frontend route
 app.use((req, res, next) => {
-  const apiPaths = ["/api", "/uploads", "/signup", "/login", "/doubts", "/leaderboard", "/start-meeting"];
-  if (apiPaths.some(p => req.path.startsWith(p))) return next(); // skip backend routes
+  const apiPaths = ["/api", "/uploads", "/signup", "/login", "/doubts", "/leaderboard", "/start-meeting", "/juniors"];
+  if (apiPaths.some(p => req.path.startsWith(p))) return next();
   res.sendFile(path.join(publicDir, "index.html"));
 });
-
 
 // ---------------------- START SERVER ----------------------
 const PORT = process.env.PORT || 5000;

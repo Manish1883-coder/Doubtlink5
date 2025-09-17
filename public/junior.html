@@ -43,14 +43,14 @@
     <h1>DoubtLink</h1>
     <nav>
       <a href="leaderboard.html">Leaderboard</a>
-      <a href="index.html">Logout</a>
+      <a href="index.html" onclick="logout()">Logout</a>
     </nav>
   </header>
 
   <div class="container">
     <!-- Junior Profile Info -->
     <div class="profile-info">
-      <h2 id="juniorName">Junior Name</h2>
+      <h2 id="juniorName">Loading...</h2>
       <p><strong>Year:</strong> <span id="juniorYear">Loading...</span></p>
       <p><strong>Course:</strong> <span id="juniorCourse">Loading...</span></p>
     </div>
@@ -59,7 +59,7 @@
     <div class="doubt-section">
       <input type="text" id="doubtInput" placeholder="Enter your doubt">
       <select id="seniorSelect">
-        <option value="all">Send to All Seniors</option>
+        <option value="">Select Senior (or leave empty for all)</option>
       </select>
       <input type="file" id="imageInput" accept="image/*">
       <button id="postDoubtBtn">Post Doubt</button>
@@ -75,7 +75,7 @@
   <script>
     const socket = io();
     const token = localStorage.getItem("token");
-    let currentUser = null;
+    let currentUser = JSON.parse(localStorage.getItem("user") || null);
 
     const juniorNameEl = document.getElementById('juniorName');
     const juniorYearEl = document.getElementById('juniorYear');
@@ -84,36 +84,34 @@
     const postDoubtBtn = document.getElementById('postDoubtBtn');
     const seniorSelect = document.getElementById('seniorSelect');
 
-    // Helper API call
-    async function api(path, options={}) {
-      const headers = options.headers || {};
-      headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(path, { ...options, headers });
-      return res.json();
+    // Logout function
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
     }
 
-    // Load profile
-    async function loadProfile() {
-      const res = await fetch('/me', { headers: { Authorization: `Bearer ${token}` }});
-      if (res.ok) {
-        currentUser = await res.json();
-        juniorNameEl.innerText = currentUser.username;
+    // Load profile info
+    function loadProfile() {
+      if (currentUser) {
+        juniorNameEl.innerText = currentUser.name;
         juniorYearEl.innerText = currentUser.year;
         juniorCourseEl.innerText = currentUser.course;
       }
     }
 
-    // Load seniors
+    // Load seniors into dropdown
     async function loadSeniors() {
-      const res = await fetch('/seniors', { headers: { Authorization: `Bearer ${token}` }});
-      if (res.ok) {
+      try {
+        const res = await fetch('/users?role=senior', { headers: { Authorization: `Bearer ${token}` }});
         const seniors = await res.json();
         seniors.forEach(s => {
           const option = document.createElement('option');
           option.value = s._id;
-          option.innerText = s.username;
+          option.innerText = s.name;
           seniorSelect.appendChild(option);
         });
+      } catch(err) {
+        console.error("Error loading seniors:", err);
       }
     }
 
@@ -123,35 +121,16 @@
       card.className = 'doubt-card';
       card.dataset.id = doubt._id;
 
-      const h4 = document.createElement('h4');
-      h4.innerText = "You asked:";
-      card.appendChild(h4);
-
-      const p = document.createElement('p');
-      p.innerText = doubt.text;
-      card.appendChild(p);
-
-      if (doubt.imageUrl) {
-        const imgDiv = document.createElement('div');
-        imgDiv.className = 'image-preview';
-        imgDiv.innerHTML = `
-          <img src="${doubt.imageUrl}" alt="Image">
-          <a href="${doubt.imageUrl}" download>Download Image</a>
-        `;
-        card.appendChild(imgDiv);
-      }
-
-      // Messages container
-      const messagesDiv = document.createElement('div');
-      messagesDiv.className = 'messages';
-      if (doubt.messages) {
-        doubt.messages.forEach(m => appendMessage(messagesDiv, m, m.sender === currentUser._id));
-      }
-      card.appendChild(messagesDiv);
+      card.innerHTML = `
+        <h4>You asked:</h4>
+        <p>${doubt.text || ''}</p>
+        ${doubt.imageUrl ? `<div class="image-preview"><img src="${doubt.imageUrl}"><a href="${doubt.imageUrl}" download>Download Image</a></div>` : ''}
+        <div class="messages"></div>
+      `;
 
       // Reply actions
-      const replyActions = document.createElement('div');
-      replyActions.className = 'reply-actions';
+      const replyDiv = document.createElement('div');
+      replyDiv.className = 'reply-actions';
       const msgInput = document.createElement('input');
       msgInput.type = 'text';
       msgInput.placeholder = 'Type your message...';
@@ -164,22 +143,24 @@
         const text = msgInput.value.trim();
         const file = imgInput.files[0];
         if (!text && !file) return;
-        let imageUrl = null;
-        if (file) {
-          const fd = new FormData();
-          fd.append('image', file);
-          const upRes = await fetch('/upload', { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body:fd });
-          const upData = await upRes.json();
-          imageUrl = upData.url;
-        }
-        socket.emit('chat:send', { doubtId:doubt._id, text, imageUrl });
+        const fd = new FormData();
+        if (text) fd.append('text', text);
+        if (file) fd.append('image', file);
+        fd.append('doubtId', doubt._id);
+        const res = await fetch('/doubts/message', {
+          method:'POST',
+          headers: { Authorization:`Bearer ${token}` },
+          body: fd
+        });
+        const msg = await res.json();
+        appendMessage(card.querySelector('.messages'), msg, true);
         msgInput.value = '';
         imgInput.value = '';
       };
-      replyActions.appendChild(msgInput);
-      replyActions.appendChild(imgInput);
-      replyActions.appendChild(sendBtn);
-      card.appendChild(replyActions);
+      replyDiv.appendChild(msgInput);
+      replyDiv.appendChild(imgInput);
+      replyDiv.appendChild(sendBtn);
+      card.appendChild(replyDiv);
 
       // Meeting button
       const meetBtn = document.createElement('button');
@@ -194,48 +175,47 @@
       doubtListEl.appendChild(card);
     }
 
-    // Append one message
     function appendMessage(container, msg, isMe) {
       const div = document.createElement('div');
-      div.className = `msg ${isMe ? 'me':'other'}`;
+      div.className = `msg ${isMe?'me':'other'}`;
       if (msg.text) div.innerText = msg.text;
-      if (msg.imageUrl) {
-        div.innerHTML = `<img src="${msg.imageUrl}" style="max-width:150px;border-radius:6px;" />`;
-      }
+      if (msg.imageUrl) div.innerHTML += `<img src="${msg.imageUrl}" style="max-width:150px;border-radius:6px;" />`;
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }
 
     // Post doubt
     postDoubtBtn.addEventListener('click', async () => {
-      const doubtInput = document.getElementById('doubtInput');
+      const text = document.getElementById('doubtInput').value.trim();
       const file = document.getElementById('imageInput').files[0];
       const senior = seniorSelect.value;
-      if (!doubtInput.value.trim() && !file) return alert("Enter doubt or upload image");
 
-      const formData = new FormData();
-      formData.append('text', doubtInput.value);
-      formData.append('senior', senior);
-      if (file) formData.append('image', file);
+      if (!text && !file) return alert("Enter doubt or upload image");
 
-      const res = await fetch('/doubts', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      });
-      const doubt = await res.json();
-      renderDoubt(doubt);
-      doubtInput.value = '';
-      document.getElementById('imageInput').value = '';
+      const fd = new FormData();
+      if (text) fd.append('text', text);
+      if (file) fd.append('image', file);
+      fd.append('senior', senior);
+
+      try {
+        const res = await fetch('/doubts', {
+          method:'POST',
+          headers: { Authorization:`Bearer ${token}` },
+          body: fd
+        });
+        const doubt = await res.json();
+        renderDoubt(doubt);
+        document.getElementById('doubtInput').value = '';
+        document.getElementById('imageInput').value = '';
+      } catch(err) {
+        console.error("Error posting doubt:", err);
+      }
     });
 
-    // Listen for replies / chat
+    // Listen for real-time chat messages
     socket.on('chat:receive', ({ doubtId, message }) => {
       const card = document.querySelector(`.doubt-card[data-id="${doubtId}"]`);
-      if (card) {
-        const messagesDiv = card.querySelector('.messages');
-        appendMessage(messagesDiv, message, message.sender === currentUser._id);
-      }
+      if (card) appendMessage(card.querySelector('.messages'), message, message.sender === currentUser._id);
     });
 
     // Init

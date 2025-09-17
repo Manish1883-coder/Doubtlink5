@@ -106,7 +106,6 @@
     .signup-container p a:hover {
       text-decoration: underline;
     }
-
   </style>
 </head>
 <body>
@@ -122,8 +121,8 @@
   <div class="signup-container">
     <h2>Create Account</h2>
     <form id="signupForm">
-      <label for="username">Username</label>
-      <input type="text" id="name" name="username" placeholder="Enter your username" required>
+      <label for="name">Username</label>
+      <input type="text" id="name" name="name" placeholder="Enter your username" required>
 
       <label for="email">Email ID</label>
       <input type="email" id="email" name="email" placeholder="Enter your email" required>
@@ -160,7 +159,7 @@
       e.preventDefault();
 
       const userData = {
-        username: document.getElementById('name').value,
+        name: document.getElementById('name').value,
         email: document.getElementById('email').value,
         password: document.getElementById('password').value,
         role: document.getElementById('role').value,
@@ -181,7 +180,7 @@
           alert('Account created successfully! Redirecting to login...');
           window.location.href = 'login.html';
         } else {
-          alert(data.message || 'Signup failed');
+          alert(data.error || 'Signup failed'); // fixed to use data.error
         }
       } catch (err) {
         alert('Error connecting to server');

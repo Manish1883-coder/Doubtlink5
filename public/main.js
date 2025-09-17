@@ -62,21 +62,61 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
 });
 
 // ---------------- JUNIOR ----------------
+
+// Load current user profile
+async function loadProfile() {
+  try {
+    const res = await fetch(`${API_BASE}/me`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error("Failed to load profile");
+    currentUser = await res.json();
+    document.getElementById("juniorName")?.innerText = currentUser.name || "N/A";
+    document.getElementById("juniorYear")?.innerText = currentUser.year || "N/A";
+    document.getElementById("juniorCourse")?.innerText = currentUser.course || "N/A";
+  } catch (err) { console.error(err); }
+}
+
+// Load all seniors for dropdown
+async function loadSeniors() {
+  try {
+    const res = await fetch(`${API_BASE}/seniors`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error("Failed to load seniors");
+    const seniors = await res.json();
+    const seniorSelect = document.getElementById("seniorSelect");
+    if (!seniorSelect) return;
+
+    seniorSelect.innerHTML = `<option value="all">All Seniors</option>`; // reset first
+
+    seniors.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s._id;
+      opt.innerText = `${s.name} (${s.year || "N/A"} - ${s.course || "N/A"})`;
+      seniorSelect.appendChild(opt);
+    });
+  } catch (err) { console.error(err); }
+}
+
+// Post a new doubt
 async function postDoubt() {
   const input = document.getElementById("doubtInput");
-  if (!input || input.value.trim() === "") return alert("Enter a doubt first!");
+  const imageInput = document.getElementById("imageInput"); // file input
+  const senior = document.getElementById("seniorSelect")?.value || "all";
+  if (!input || (!input.value.trim() && (!imageInput || !imageInput.files[0]))) return alert("Enter a doubt or upload image");
+
   try {
+    const formData = new FormData();
+    formData.append("text", input.value);
+    formData.append("senior", senior);
+    if (imageInput && imageInput.files[0]) formData.append("image", imageInput.files[0]);
+
     const res = await fetch(`${API_BASE}/doubts`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ text: input.value }),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
     const data = await res.json();
     if (res.ok) {
       input.value = "";
+      if (imageInput) imageInput.value = "";
       loadDoubts();
     } else {
       alert(data.error || "Failed to post doubt");
@@ -87,6 +127,7 @@ async function postDoubt() {
   }
 }
 
+// Load doubts
 async function loadDoubts() {
   const list = document.getElementById("doubtList");
   if (!list) return;
@@ -102,15 +143,15 @@ async function loadDoubts() {
       div.innerHTML = `
         <h4>${d.title || "Doubt"}</h4>
         <p>${d.text || d.description}</p>
+        ${d.imageUrl ? `<img src="${d.imageUrl}" alt="Doubt Image" style="max-width:200px; display:block; margin-top:0.5rem;">` : ""}
         <p><strong>Asked by:</strong> ${d.askedBy?.name}</p>
+        <p><strong>Assigned to:</strong> ${d.seniorAssigned?.name || "All Seniors"}</p>
         <p><strong>Answer:</strong> ${d.reply || "<em>Not answered yet</em>"}</p>
         ${d.meetingLink ? `<a href="${d.meetingLink}" target="_blank" class="meeting-btn">Join Meeting</a>` : ""}
       `;
       list.appendChild(div);
     });
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 // ---------------- SENIOR ----------------
@@ -120,10 +161,7 @@ async function answerDoubt(doubtId) {
   try {
     const res = await fetch(`${API_BASE}/doubts/${doubtId}/answer`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ answer }),
     });
     const data = await res.json();
@@ -134,10 +172,7 @@ async function answerDoubt(doubtId) {
     } else {
       alert(data.error || "Failed to answer");
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error answering doubt");
-  }
+  } catch (err) { console.error(err); alert("Error answering doubt"); }
 }
 
 async function startMeeting(doubtId) {
@@ -149,13 +184,11 @@ async function startMeeting(doubtId) {
     const data = await res.json();
     if (res.ok) {
       window.open(data.meetingLink, "_blank");
+      loadDoubts(); // refresh to show link
     } else {
       alert(data.error || "Failed to start meeting");
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error starting meeting");
-  }
+  } catch (err) { console.error(err); alert("Error starting meeting"); }
 }
 
 // ---------------- LEADERBOARD ----------------
@@ -180,9 +213,7 @@ async function loadLeaderboard() {
       `;
       tableBody.appendChild(tr);
     });
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 // ---------------- SOCKET.IO ----------------
@@ -190,7 +221,12 @@ const socket = io();
 
 socket.on("receiveMessage", (msg) => {
   console.log("New message:", msg);
-  // Update chat UI if chat window exists
+
+  // If meeting started, refresh doubts
+  if (msg.type === "meeting-invite") {
+    loadDoubts();
+  }
+
   const chatBox = document.getElementById("chatBox");
   if (!chatBox) return;
   const div = document.createElement("div");
@@ -206,6 +242,10 @@ socket.on("receiveMessage", (msg) => {
 
 // ---------------- AUTO INIT ----------------
 window.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("doubtList")) loadDoubts();
+  loadProfile(); // always load profile
+  if (document.getElementById("doubtList")) {
+    loadSeniors();
+    loadDoubts();
+  }
   if (document.getElementById("leaderboardTable")) loadLeaderboard();
 });

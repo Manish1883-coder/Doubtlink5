@@ -41,7 +41,6 @@
     .me{ background:#2a2a2a; align-self:flex-end; }
     .other{ background:#23232f; align-self:flex-start; }
 
-    .delete-btn{ position:absolute; top:.5rem; right:.5rem; background:red; color:#fff; font-weight:bold; cursor:pointer; padding:.3rem .6rem; border:none; border-radius:5px; }
     @media(max-width:768px){ .points-badges{ flex-direction:column; gap:1rem; } }
   </style>
 </head>
@@ -55,11 +54,10 @@
   </header>
 
   <div class="container">
-    <!-- Profile Info -->
     <div class="profile-card">
-      <h2 id="seniorName">Senior Name</h2>
-      <p id="seniorYear">Year: 4th Year</p>
-      <p id="seniorCourse">Course: B.Tech IT</p>
+      <h2 id="seniorName">Loading...</h2>
+      <p id="seniorYear">Year: --</p>
+      <p id="seniorCourse">Course: --</p>
     </div>
 
     <div class="points-badges">
@@ -69,7 +67,6 @@
 
     <div class="group-meeting">
       <h2>Start Group Meeting</h2>
-      <p>Select juniors and click start:</p>
       <div id="juniorSelection"></div>
       <button class="meeting-btn" onclick="startGroupMeeting()">Start Meeting</button>
     </div>
@@ -81,7 +78,8 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
+    const API_BASE = "https://doubtlink5.onrender.com";
+    const socket = io(API_BASE);
     const token = localStorage.getItem("token");
     let seniorData = null;
 
@@ -91,117 +89,97 @@
     const doubtList = document.getElementById('doubtList');
     const juniorSelectionDiv = document.getElementById("juniorSelection");
 
-    let points = 0;
-    let badges = 0;
-
-    function updatePointsAndBadges() {
-      document.getElementById('points').innerText = points;
-      const badgeCount = points >= 18 ? 3 : points >= 9 ? 2 : points >= 3 ? 1 : 0;
-      badges = badgeCount;
-      const badgeText = badges === 0 ? 'None' : `${badges} Badge${badges>1?'s':''}`;
-      document.getElementById('badges').innerText = badgeText;
-    }
-
+    // Load profile
     async function loadProfile() {
-      const res = await fetch('/me', { headers:{Authorization:`Bearer ${token}`}});
+      const res = await fetch(`${API_BASE}/me`, { headers:{Authorization:`Bearer ${token}`}});
       if(res.ok){
         seniorData = await res.json();
-        seniorNameEl.innerText = seniorData.username;
-        seniorYearEl.innerText = "Year: "+seniorData.year;
-        seniorCourseEl.innerText = "Course: "+seniorData.course;
-        points = seniorData.points || 0;
-        updatePointsAndBadges();
+        seniorNameEl.innerText = seniorData.name;
+        seniorYearEl.innerText = "Year: " + (seniorData.year || "--");
+        seniorCourseEl.innerText = "Course: " + (seniorData.course || "--");
+        document.getElementById('points').innerText = seniorData.points || 0;
+        document.getElementById('badges').innerText = (seniorData.badges || 0) + " Badges";
       }
     }
 
+    // Load juniors
     async function loadJuniors() {
-      const res = await fetch('/juniors', { headers:{Authorization:`Bearer ${token}`}});
+      const res = await fetch(`${API_BASE}/juniors`, { headers:{Authorization:`Bearer ${token}`}});
       if(res.ok){
         const juniors = await res.json();
+        juniorSelectionDiv.innerHTML = "";
         juniors.forEach(j => {
-          const checkboxDiv = document.createElement("div");
-          checkboxDiv.innerHTML = `<label><input type="checkbox" class="junior-checkbox" value="${j.username}"> ${j.username}</label>`;
-          juniorSelectionDiv.appendChild(checkboxDiv);
+          juniorSelectionDiv.innerHTML += `<label><input type="checkbox" value="${j._id}"> ${j.name}</label><br>`;
         });
       }
     }
 
-    function generateMeetingLink(roomName="DoubtLinkRoom"){ 
-      return `https://meet.jit.si/${roomName}_${Math.floor(Math.random()*100000)}`;
+    // Start group meeting and save in backend
+    async function startGroupMeeting(){
+      const selected = [...juniorSelectionDiv.querySelectorAll('input:checked')].map(cb=>cb.value);
+      if(selected.length===0){ return alert("Select juniors"); }
+      const res = await fetch(`${API_BASE}/start-meeting/group`, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ juniors:selected })
+      });
+      const data = await res.json();
+      if(res.ok) window.open(data.meetingLink,"_blank");
     }
 
-    function startGroupMeeting(){
-      const selected = [...document.querySelectorAll('.junior-checkbox:checked')].map(cb=>cb.value);
-      if(selected.length===0){ alert("Select at least one junior."); return; }
-      const link = generateMeetingLink("GroupMeet");
-      alert(`Meeting started with: ${selected.join(", ")}\nLink: ${link}`);
-      window.open(link,"_blank");
-    }
-
-    function createDoubtCard(doubt){
+    // Doubt card
+    function createDoubtCard(d){
       const card = document.createElement('div');
       card.className='doubt-card';
-      card.dataset.id=doubt._id;
-
-      const h4=document.createElement('h4'); h4.innerText=`${doubt.juniorName} asked:`; card.appendChild(h4);
-      const p=document.createElement('p'); p.innerText=doubt.text; card.appendChild(p);
-
-      if(doubt.imageUrl){
-        const imgDiv=document.createElement('div'); imgDiv.className='image-preview';
-        imgDiv.innerHTML=`<img src="${doubt.imageUrl}" alt="Image"><a href="${doubt.imageUrl}" download>Download Image</a>`;
-        card.appendChild(imgDiv);
-      }
-
-      const messagesDiv=document.createElement('div'); messagesDiv.className='messages';
-      if(doubt.messages) doubt.messages.forEach(m=>appendMessage(messagesDiv,m,m.sender===seniorData._id));
-      card.appendChild(messagesDiv);
-
-      const replyDiv=document.createElement('div'); replyDiv.className='reply-section';
-      const replyInput=document.createElement('input'); replyInput.type='text'; replyInput.placeholder='Write your answer';
-      const imageInput=document.createElement('input'); imageInput.type='file'; imageInput.accept='image/*';
-      const replyBtn=document.createElement('button'); replyBtn.innerText='Send';
-      replyBtn.onclick=async ()=>{
-        const text=replyInput.value.trim();
-        const file=imageInput.files[0];
-        if(!text && !file) return;
-        let imageUrl=null;
-        if(file){
-          const fd=new FormData(); fd.append('image',file);
-          const upRes=await fetch('/upload',{ method:'POST', headers:{Authorization:`Bearer ${token}`}, body:fd });
-          const upData=await upRes.json(); imageUrl=upData.url;
+      card.dataset.id=d._id;
+      card.innerHTML=`
+        <h4>${d.askedBy?.name} asked:</h4>
+        <p>${d.text}</p>
+        ${d.imageUrl?`<div class="image-preview"><img src="${d.imageUrl}"></div>`:""}
+        <p><strong>Answer:</strong> ${d.reply || "<em>Not answered yet</em>"}</p>
+        ${d.meetingLink?`<a href="${d.meetingLink}" target="_blank" class="meeting-btn">Join Meeting</a>`:""}
+        <div class="reply-section">
+          <input type="text" placeholder="Write answer">
+          <button>Send</button>
+        </div>
+      `;
+      const btn = card.querySelector('button');
+      const input = card.querySelector('input');
+      btn.onclick = async ()=>{
+        if(!input.value.trim()) return;
+        const res = await fetch(`${API_BASE}/doubts/${d._id}/answer`, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+          body: JSON.stringify({ answer: input.value })
+        });
+        const data = await res.json();
+        if(res.ok){
+          input.value="";
+          card.querySelector("p strong").parentNode.innerHTML = `<strong>Answer:</strong> ${data.reply}`;
+          socket.emit("chat:send",{ doubtId:d._id, text:data.reply });
+          loadProfile(); // refresh points/badges
         }
-        socket.emit('chat:send',{ doubtId:doubt._id, text, imageUrl });
-        replyInput.value=''; imageInput.value='';
-        points+=1; updatePointsAndBadges();
       };
-      replyDiv.appendChild(replyInput); replyDiv.appendChild(imageInput); replyDiv.appendChild(replyBtn);
-      card.appendChild(replyDiv);
-
-      const meetBtn=document.createElement('button'); meetBtn.className='meeting-btn'; meetBtn.innerText=`Start Meeting with ${doubt.juniorName}`;
-      meetBtn.onclick=()=>{ window.open(generateMeetingLink(doubt.juniorName.replace(/\s+/g,'')),"_blank"); };
-      card.appendChild(meetBtn);
-
-      const deleteBtn=document.createElement('button'); deleteBtn.className='delete-btn'; deleteBtn.innerText='Delete';
-      deleteBtn.onclick=()=>card.remove(); card.appendChild(deleteBtn);
-
       doubtList.appendChild(card);
     }
 
-    function appendMessage(container,msg,isMe){
-      const div=document.createElement('div'); div.className=`msg ${isMe?'me':'other'}`;
-      if(msg.text) div.innerText=msg.text;
-      if(msg.imageUrl) div.innerHTML=`<img src="${msg.imageUrl}" style="max-width:150px;border-radius:6px;" />`;
-      container.appendChild(div); container.scrollTop=container.scrollHeight;
+    // Load doubts
+    async function loadDoubts() {
+      const res = await fetch(`${API_BASE}/doubts`, { headers:{Authorization:`Bearer ${token}`}});
+      if(res.ok){
+        const doubts = await res.json();
+        doubtList.innerHTML = "<h2>Junior Doubts</h2>";
+        doubts.forEach(d=>createDoubtCard(d));
+      }
     }
 
-    socket.on('chat:receive',({doubtId,message})=>{
-      const card=document.querySelector(`.doubt-card[data-id="${doubtId}"]`);
-      if(card){ appendMessage(card.querySelector('.messages'),message,message.sender===seniorData._id); }
-    });
+    // Sockets
+    socket.on("doubt:new",d=>createDoubtCard(d));
 
-    socket.on('doubt:new',(doubt)=>{ createDoubtCard(doubt); });
-
-    loadProfile(); loadJuniors();
+    // Init
+    loadProfile();
+    loadJuniors();
+    loadDoubts();
   </script>
 </body>
 </html>
